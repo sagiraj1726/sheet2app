@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sheet2App — Turn any Excel into an interactive app</title>
+  <meta name="description" content="Upload an Excel workbook and get editable forms, a searchable table, smart charts that explain themselves in plain language, and an updated Excel file to download. No coding. No database.">
+  <meta name="theme-color" content="#4f46e5">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%234f46e5'/%3E%3Cpath d='M8 16.5l5 5 11-11' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header id="site-nav"></header>
+
+<main id="main">
+  <!-- ============================================================ HERO -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow" data-icon="bolt">Works with any spreadsheet. No coding.</span>
+        <h1>Your Excel data.<br><span class="grad">A complete application.</span></h1>
+        <p class="lead">Upload a workbook and Sheet2App instantly builds editable forms, a searchable table and smart charts that explain themselves in plain language. Edit, save, then download the updated Excel file.</p>
+        <div class="hero-actions">
+          <button class="btn btn-primary btn-lg" data-act="upload" data-icon="upload">&nbsp;Upload your Excel</button>
+          <button class="btn btn-lg" data-act="demo" data-icon="bolt">&nbsp;Try the live demo</button>
+        </div>
+        <div class="chip-row" aria-label="Highlights">
+          <span class="chip" data-icon="check">&nbsp;No sign-up needed</span>
+          <span class="chip" data-icon="check">&nbsp;No formulas to learn</span>
+          <span class="chip" data-icon="check">&nbsp;Files auto-deleted</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="dropzone" id="dropzone" aria-label="Upload area">
+          <div class="dz-icon" data-icon="upload"></div>
+          <h3>Drop your Excel file here</h3>
+          <p class="muted small" style="margin:0">.xlsx files · every sheet is read · multiple sheets supported</p>
+          <button class="btn btn-primary" data-act="upload" data-icon="file">&nbsp;Choose a file</button>
+          <div class="progress" id="dz-progress" hidden><i></i></div>
+          <div class="dz-status" id="dz-status" role="status" aria-live="polite"></div>
+          <div class="dz-sep">or start with fictional sample data</div>
+          <div class="dz-samples">
+            <button class="btn btn-sm" data-act="sample" data-name="inventory" data-icon="cart">&nbsp;Inventory</button>
+            <button class="btn btn-sm" data-act="sample" data-name="expenses" data-icon="wallet">&nbsp;Expenses</button>
+            <button class="btn btn-sm" data-act="sample" data-name="students" data-icon="school">&nbsp;Student marks</button>
+            <button class="btn btn-sm" data-act="sample" data-name="leads" data-icon="building">&nbsp;Property leads</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wrap" style="margin-top:44px">
+      <div class="stat-strip" role="list">
+        <div role="listitem"><b>14</b><span>field types, picked for you</span></div>
+        <div role="listitem"><b>10</b><span>chart types with plain-English notes</span></div>
+        <div role="listitem"><b>All</b><span>sheets in your workbook, handled separately</span></div>
+        <div role="listitem"><b>0</b><span>databases, accounts or code needed</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ PROBLEM -->
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="kicker">The problem</span>
+        <h2>Spreadsheets are powerful. They are also easy to break.</h2>
+        <p>Anyone can type in the wrong column, overwrite a formula, or stare at 5,000 rows wondering what it all means. Building a proper app for it normally takes a developer and weeks of work.</p>
+      </div>
+      <div class="grid grid-3">
+        <div class="card card-pad feature"><div class="f-ic rose" data-icon="alert"></div><h3>Messy data entry</h3><p>Free-typing into cells leads to "Delhi", "delhi " and "New Delhi" in the same column. Forms with dropdowns keep entries clean.</p></div>
+        <div class="card card-pad feature"><div class="f-ic amber" data-icon="clock"></div><h3>Hours spent on charts</h3><p>Choosing chart types, grouping dates and formatting axes is slow, and still leaves you asking "so what does this tell me?"</p></div>
+        <div class="card card-pad feature"><div class="f-ic" data-icon="users"></div><h3>Hard to share with others</h3><p>Not everyone is comfortable inside Excel. A simple form and a clear dashboard are friendlier for teachers, shop staff and managers.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ HOW -->
+  <section class="section alt" id="how">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="kicker">How it works</span>
+        <h2>From spreadsheet to working app in three steps</h2>
+        <p>The whole journey takes a couple of minutes, and you stay in control at every step.</p>
+      </div>
+      <div class="grid grid-3 steps">
+        <div class="card step"><div class="step-no">1</div><h3>Upload your workbook</h3><p>Drop in any .xlsx file. We read every sheet, find your headers, and flag anything unusual, like blank columns or duplicate names, instead of hiding it.</p></div>
+        <div class="card step"><div class="step-no">2</div><h3>Review and customise</h3><p>Fields are chosen automatically: text boxes, dropdowns, checkboxes, date pickers and text areas. Rename, reorder, add help text or change any type in a click.</p></div>
+        <div class="card step"><div class="step-no">3</div><h3>Edit, explore, download</h3><p>Add and edit records, switch on Insights for charts that explain themselves, then download your updated Excel file with every change.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ PRODUCT PREVIEW -->
+  <section class="section" id="preview">
+    <div class="wrap split">
+      <div>
+        <span class="kicker">See it</span>
+        <h2>A dashboard that tells you what your numbers mean</h2>
+        <p class="muted" style="font-size:1.05rem">Every chart has hover details, an <b>Explain this chart</b> button and a <b>What does this mean?</b> summary written in everyday language. The wording comes from calculations on your actual rows, never guesses.</p>
+        <ul class="muted" style="padding-left:1.2em">
+          <li>Totals, averages, trends over time, shares and spreads</li>
+          <li>Filters and date ranges you can change at any time</li>
+          <li>Honest limits: it tells you when data is missing or a chart would be misleading</li>
+        </ul>
+        <button class="btn btn-primary" data-act="demo" data-icon="chart">&nbsp;Open this demo yourself</button>
+      </div>
+      <div class="mock" aria-label="Illustration of the dashboard using fictional data" role="img">
+        <div class="mock-bar"><i></i><i></i><i></i><span>Sample · Monthly expenses (fictional data)</span></div>
+        <div class="mock-body">
+          <div class="mock-kpis">
+            <div class="mock-kpi"><small>Total expenses</small><b>₹4,01,230</b></div>
+            <div class="mock-kpi"><small>Records</small><b>36</b></div>
+            <div class="mock-kpi"><small>Data completeness</small><b>100%</b></div>
+          </div>
+          <div class="mock-chart">
+            <div class="mc-head"><span>Marketing spend by month</span><span class="badge teal">Explain this chart</span></div>
+            <svg viewBox="0 0 400 170" width="100%" role="presentation" aria-hidden="true">
+              <g stroke="#e4e7ef"><line x1="30" x2="390" y1="20" y2="20"/><line x1="30" x2="390" y1="62" y2="62"/><line x1="30" x2="390" y1="104" y2="104"/><line x1="30" x2="390" y1="146" y2="146"/></g>
+              <g fill="#c7cbff"><rect x="50" y="112" width="34" height="34" rx="5"/><rect x="108" y="102" width="34" height="44" rx="5"/><rect x="166" y="94" width="34" height="52" rx="5"/><rect x="224" y="80" width="34" height="66" rx="5"/><rect x="282" y="64" width="34" height="82" rx="5"/></g>
+              <rect x="340" y="40" width="34" height="106" rx="5" fill="#4f46e5"/>
+              <polyline fill="none" stroke="#0d9488" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="67,112 125,102 183,94 241,80 299,64 357,40"/>
+              <g fill="#0d9488"><circle cx="357" cy="40" r="4.5"/></g>
+              <g font-size="10" fill="#566077" text-anchor="middle"><text x="67" y="162">Jan</text><text x="125" y="162">Feb</text><text x="183" y="162">Mar</text><text x="241" y="162">Apr</text><text x="299" y="162">May</text><text x="357" y="162">Jun</text></g>
+            </svg>
+            <div class="quote" style="font-size:.85rem;margin-top:8px"><b>What does this mean?</b> Marketing spend rose from ₹15,990 in Jan to ₹26,800 in Jun, a rise of ₹10,810 or 67.6%.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ FEATURES -->
+  <section class="section alt" id="features">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="kicker">Features</span>
+        <h2>Everything you need, nothing you have to learn</h2>
+      </div>
+      <div class="grid grid-3">
+        <div class="card card-pad feature card-hover"><div class="f-ic" data-icon="form"></div><h3>Smart forms</h3><p>Text boxes, dropdown lists, searchable lists, checkboxes, date pickers and text areas, chosen for you from your column names and values. Phone numbers and IDs keep their leading zeros.</p></div>
+        <div class="card card-pad feature card-hover"><div class="f-ic teal" data-icon="sheet"></div><h3>Editable data table</h3><p>Search, sort, filter and page through large sheets. Click a row to edit it. Add or delete records with a confirmation. Undo recent saves.</p></div>
+        <div class="card card-pad feature card-hover"><div class="f-ic amber" data-icon="chart"></div><h3>Insights that explain themselves</h3><p>Bar, line, pie, histogram, scatter, box plot and more. Hover for exact values, or click <i>Explain this chart</i> for a plain-language reading.</p></div>
+        <div class="card card-pad feature card-hover"><div class="f-ic rose" data-icon="cog"></div><h3>Field editor</h3><p>Rename labels, add help text, set dropdown choices, require fields, hide columns, drag to reorder. Add or remove whole columns, with a clear warning before anything is deleted.</p></div>
+        <div class="card card-pad feature card-hover"><div class="f-ic" data-icon="layers"></div><h3>Multiple sheets</h3><p>Every worksheet gets its own form, table and charts. Switching sheets never throws away your unsaved edits without asking.</p></div>
+        <div class="card card-pad feature card-hover"><div class="f-ic teal" data-icon="download"></div><h3>Download updated Excel</h3><p>Your latest saved changes go back into your original workbook, keeping sheet order, column widths, styles and formulas where possible. Or export one sheet as CSV.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ FIELD MAPPING -->
+  <section class="section">
+    <div class="wrap split">
+      <div class="card" style="overflow:hidden">
+        <div class="table-scroll">
+        <table class="field-map">
+          <thead><tr><th>Your Excel column</th><th>Becomes</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td><b>Employee Name</b></td><td><span class="badge">Text box</span></td><td class="ex">Enter employee name</td></tr>
+            <tr><td><b>Department</b></td><td><span class="badge teal">Dropdown</span></td><td class="ex">HR · IT · Sales</td></tr>
+            <tr><td><b>Joining Date</b></td><td><span class="badge">Date picker</span></td><td class="ex">Select a date</td></tr>
+            <tr><td><b>Is Active</b></td><td><span class="badge ok">Checkbox</span></td><td class="ex">Yes / No</td></tr>
+            <tr><td><b>Notes</b></td><td><span class="badge warn">Text area</span></td><td class="ex">Several lines of text</td></tr>
+            <tr><td><b>Salary</b></td><td><span class="badge">Money</span></td><td class="ex">₹25,000</td></tr>
+            <tr><td><b>Employee ID</b></td><td><span class="badge gray">Text (kept exact)</span></td><td class="ex">0007 stays 0007</td></tr>
+          </tbody>
+        </table>
+        </div>
+      </div>
+      <div>
+        <span class="kicker">Automatic field detection</span>
+        <h2>It reads your data, not just your headers</h2>
+        <p class="muted" style="font-size:1.05rem">Sheet2App looks at column names, the values inside, how often they repeat and whether they are dates, numbers or yes/no answers, then picks the clearest control.</p>
+        <p class="muted">Guesses are only <b>suggestions</b>. Every field shows why it was chosen, and you can override any of them. When in doubt we use a safe text field rather than quietly changing your data.</p>
+        <div class="notice ok" role="note"><span data-icon="shield"></span><span><b>Your IDs are safe.</b> Survey numbers, phone numbers, postal codes and account numbers are never turned into ordinary numbers.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ EXPLAIN DEMO -->
+  <section class="section alt">
+    <div class="wrap split">
+      <div>
+        <span class="kicker">Plain-language insights</span>
+        <h2>Three layers of explanation on every chart</h2>
+        <p class="muted" style="font-size:1.05rem">You do not need to be a data analyst. Each chart answers the questions a curious person would ask.</p>
+        <ol class="muted" style="padding-left:1.2em">
+          <li><b>Hover</b> for the exact value, category and share.</li>
+          <li><b>Explain this chart</b> says what it shows and how to read it.</li>
+          <li><b>What does this mean?</b> summarises the pattern with real numbers.</li>
+        </ol>
+        <p class="small muted">Calculated from your data, not invented. It also tells you what is missing and never claims one thing causes another.</p>
+      </div>
+      <div class="card explain-demo" id="explain-demo">
+        <div class="mc-head" style="display:flex;justify-content:space-between;font-weight:700"><span>Monthly expense trend</span><span class="badge gray">Example</span></div>
+        <div class="ed-tabs" role="tablist" aria-label="Explanation layers">
+          <button class="btn btn-sm btn-primary" role="tab" aria-selected="true" data-tab="hover">On hover</button>
+          <button class="btn btn-sm" role="tab" aria-selected="false" data-tab="explain">Explain this chart</button>
+          <button class="btn btn-sm" role="tab" aria-selected="false" data-tab="mean">What does this mean?</button>
+        </div>
+        <div class="quote indigo" data-panel="hover"><b>February 2025</b><br>Total expenses: <b>₹55,000</b><br>Share of 6-month total: 18.2%</div>
+        <div class="quote" data-panel="explain" hidden>This line chart shows the <b>total expenses</b> for each month. Left to right is time. When the line goes up, you spent more than the month before.</div>
+        <div class="quote" data-panel="mean" hidden>Expenses <b>increased from ₹40,000 in January to ₹55,000 in February</b>, a rise of ₹15,000 or 37.5%. Check which categories contributed most to the increase.</div>
+        <p class="xs muted" style="margin:12px 0 0">Illustration using fictional figures.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ USE CASES -->
+  <section class="section" id="use-cases">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="kicker">Who it is for</span>
+        <h2>Made for people who live in Excel</h2>
+        <p>Pick a sample, play with it in under a minute, then try your own file.</p>
+      </div>
+      <div class="grid grid-4">
+        <div class="card usecase card-hover"><h3><span class="f-ic" style="margin:0;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:var(--brand-50);color:var(--brand)" data-icon="cart"></span>Shops</h3><p>Stock levels, reorder flags, supplier lists and sales sheets that staff can update from a simple form.</p><button class="btn btn-sm" data-act="sample" data-name="inventory">Try inventory</button></div>
+        <div class="card usecase card-hover"><h3><span class="f-ic" style="margin:0;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:var(--accent-50);color:var(--accent)" data-icon="school"></span>Teachers</h3><p>Marks, attendance and remarks. See score distributions and spot the students who need extra help.</p><button class="btn btn-sm" data-act="sample" data-name="students">Try student marks</button></div>
+        <div class="card usecase card-hover"><h3><span class="f-ic" style="margin:0;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:var(--warn-50);color:var(--warn)" data-icon="wallet"></span>Small teams</h3><p>Expense trackers, project lists and client databases, with charts that show where the money goes.</p><button class="btn btn-sm" data-act="sample" data-name="expenses">Try expenses</button></div>
+        <div class="card usecase card-hover"><h3><span class="f-ic" style="margin:0;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:#fdeaf1;color:#be185d" data-icon="building"></span>Agents</h3><p>Property leads, follow-up dates and budgets in one place, with statuses as clean dropdowns.</p><button class="btn btn-sm" data-act="sample" data-name="leads">Try property leads</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ COMPARE -->
+  <section class="section alt">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="kicker">Why Sheet2App</span>
+        <h2>The speed of a spreadsheet, the comfort of an app</h2>
+        <p>An honest look at the options when you have an Excel file and need others to use it.</p>
+      </div>
+      <div class="table-scroll">
+        <table class="compare">
+          <thead><tr><th></th><th>Plain Excel</th><th>Hiring a developer</th><th class="us">Sheet2App</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Time to a usable app</th><td>Already there, but no app</td><td>Weeks</td><td class="us"><span class="yes">Minutes</span></td></tr>
+            <tr><th scope="row">Forms with dropdowns &amp; validation</th><td><span class="mid">Manual setup</span></td><td><span class="yes">Yes</span></td><td class="us"><span class="yes">Automatic</span></td></tr>
+            <tr><th scope="row">Charts explained in plain words</th><td><span class="no">No</span></td><td><span class="mid">Extra work</span></td><td class="us"><span class="yes">Built in</span></td></tr>
+            <tr><th scope="row">Keeps working with your .xlsx</th><td><span class="yes">Yes</span></td><td><span class="mid">Needs import / export code</span></td><td class="us"><span class="yes">Round-trips to Excel</span></td></tr>
+            <tr><th scope="row">Skills needed</th><td>Excel know-how</td><td>None (but a budget)</td><td class="us">None</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="xs muted center" style="margin-top:12px">Sheet2App is a focused tool for turning one workbook into an app. It does not replace full database or workflow platforms.</p>
+    </div>
+  </section>
+
+  <!-- ============================================================ TRUST -->
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="kicker">Trust &amp; privacy</span>
+        <h2>Your data stays yours</h2>
+        <p>Spreadsheets often contain sensitive information. Here is exactly how we treat them.</p>
+      </div>
+      <div class="grid grid-4">
+        <div class="card card-pad feature"><div class="f-ic" data-icon="lock"></div><h3>Private workspace</h3><p>Each upload gets a random, unguessable ID tied to your browser. Others cannot open it.</p></div>
+        <div class="card card-pad feature"><div class="f-ic teal" data-icon="clock"></div><h3>Auto-deleted</h3><p>Workspaces expire automatically after a set time, and you can delete yours at any moment.</p></div>
+        <div class="card card-pad feature"><div class="f-ic amber" data-icon="shield"></div><h3>Never executed</h3><p>Macros are rejected and formulas are never run. Spreadsheet content is treated as untrusted.</p></div>
+        <div class="card card-pad feature"><div class="f-ic rose" data-icon="eye"></div><h3>No AI uploads</h3><p>Explanations are calculated on the server. Your data is not sent to third-party AI services.</p></div>
+      </div>
+      <p class="center small" style="margin-top:20px"><a href="/privacy">Read the full privacy and limitations page →</a></p>
+    </div>
+  </section>
+
+  <!-- ============================================================ PRICING PREVIEW -->
+  <section class="section alt">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="kicker">Pricing</span>
+        <h2>Start free. Grow when you need to.</h2>
+        <p>Plans below are early proposals we are validating with real users. Nothing is being charged today.</p>
+      </div>
+      <div class="grid grid-3" id="price-preview"></div>
+      <p class="center small" style="margin-top:20px"><a href="/pricing">Compare plans in detail →</a></p>
+    </div>
+  </section>
+
+  <!-- ============================================================ FAQ -->
+  <section class="section" id="faq">
+    <div class="wrap">
+      <div class="section-head"><span class="kicker">Questions</span><h2>Frequently asked</h2></div>
+      <div class="faq">
+        <details><summary>What kind of Excel files work?</summary><p>Modern .xlsx workbooks with one or many sheets. Old .xls files are not supported yet: open them in Excel and use File → Save As → Excel Workbook. Macro-enabled files are rejected for safety.</p></details>
+        <details><summary>Will my formulas and formatting survive?</summary><p>Formulas, column widths, styles and sheet order are kept where possible, and formula results refresh when you open the file in Excel. Some advanced items (charts, pictures and pivot tables inside the workbook) may not survive the download. The privacy page lists known limits openly.</p></details>
+        <details><summary>Do I need an account?</summary><p>No. You get an anonymous private workspace in your browser. Team accounts and sharing are planned but not available yet.</p></details>
+        <details><summary>Are the charts "AI generated"?</summary><p>No. Charts and explanations are produced by deterministic calculations on your data, so the numbers always match your sheet. The app works fully without any AI service.</p></details>
+        <details><summary>Is it really free?</summary><p>The Free plan is open now. Paid plans are not yet on sale; the prices shown are hypotheses we are testing, and you will be told clearly before anything is ever charged.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ FINAL CTA -->
+  <section class="section" style="padding-top:0">
+    <div class="wrap">
+      <div class="cta-band">
+        <h2>Your spreadsheet is already the hard part.</h2>
+        <p>Turn it into something people actually enjoy using. It takes about two minutes and nothing to install.</p>
+        <div class="hero-actions" style="justify-content:center;margin-bottom:0">
+          <button class="btn btn-primary btn-lg" data-act="upload" data-icon="upload">&nbsp;Upload your Excel</button>
+          <button class="btn btn-lg" data-act="demo">Try the demo first</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer id="site-footer"></footer>
+
+<script src="/js/common.js"></script>
+<script src="/js/landing.js"></script>
+</body>
+</html>

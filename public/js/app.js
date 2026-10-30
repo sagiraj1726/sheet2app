@@ -8,6 +8,7 @@
   const state = {
     id: null, wb: null, sheets: {}, sheetId: null, tab: 'overview', edits: {}, views: {}, undo: [],
     insights: false, saving: false, fieldsDirty: false, counter: 0, menuOpen: false, visited: {}, downloaded: false, saveFailed: false,
+    changeLog: [],   // accumulates {sheetName, added, updated, deleted, fields} per save
   };
   try { state.insights = localStorage.getItem('s2a_insights') === '1'; } catch { /* ignore */ }
 
@@ -96,9 +97,52 @@
   }
 
   async function confirmDelete(rec) {
-    if (rec.state === 'new') return true;
     const s = cur();
-    return S.confirmDialog({ title: 'Delete this record?', danger: true, confirmText: 'Mark for deletion', body: h('div', {}, h('p', {}, h('b', {}, F().recordTitle(s, rec, 0))), h('p.small.muted', {}, 'It will be removed from your workbook when you click Save. Until then you can restore it.')) });
+    // new (unsaved) records: confirm silently since they've never been saved
+    if (rec.state === 'new') return true;
+    const cols = s.columns.filter((c) => c.visible !== false && c.type !== 'readonly' && !F().isEmpty(rec.v[c.id]));
+    const rows = cols.map((c) => h('div.rec-preview-row', {},
+      h('span.rpr-label', {}, c.label),
+      h('span.rpr-value', {}, F().display(c, rec.v[c.id]) || String(rec.v[c.id]))));
+    return S.confirmDialog({
+      title: 'Delete this record?', danger: true, confirmText: 'Delete', cancelText: 'Cancel',
+      body: h('div', {},
+        h('p', { style: 'margin-bottom:12px' }, 'The following record will be ', h('b', { style: 'color:var(--danger)' }, 'deleted'), ' when you save:'),
+        h('div.rec-preview', {}, ...rows),
+        h('p.small.muted', { style: 'margin-top:10px' }, 'It is removed from your workbook on the next Save. Until then you can restore it from the table.')),
+    });
+  }
+
+  async function showEditPreview(rec) {
+    const s = cur();
+    const ed = E(s.id).map[rec.key];
+    // if no unsaved edits yet, just open the form
+    if (!ed || !ed.values || !Object.keys(ed.values).length) { ctx.openRecord(rec.key); return; }
+
+    const changedCols = s.columns.filter((c) => c.id in ed.values);
+    const rows = changedCols.map((c) => {
+      const oldVal = s.rows.find((r) => r.id === rec.key);
+      const oldRaw = oldVal ? oldVal.v[c.id] : null;
+      const newRaw = ed.values[c.id];
+      const oldTxt = F().isEmpty(oldRaw) ? h('span.rpr-empty', {}, '(empty)') : h('span', {}, F().display(c, oldRaw));
+      const newTxt = F().isEmpty(newRaw) ? h('span.rpr-empty', {}, '(empty)') : h('span', {}, F().display(c, newRaw));
+      return h('div.rec-preview-row', {},
+        h('span.rpr-label', {}, c.label),
+        h('span.rpr-diff', {},
+          h('span.rpr-old', {}, oldTxt),
+          h('span.rpr-arrow', { html: icon('right') }),
+          h('span.rpr-new', {}, newTxt)));
+    });
+
+    const goEdit = await S.confirmDialog({
+      title: `Unsaved edits on this record`,
+      confirmText: 'Continue editing',
+      cancelText: 'Close',
+      body: h('div', {},
+        h('p', { style: 'margin-bottom:12px' }, h('b', {}, String(changedCols.length)), ` field${changedCols.length === 1 ? '' : 's'} changed (not yet saved):`),
+        h('div.rec-preview', {}, ...rows)),
+    });
+    if (goEdit) ctx.openRecord(rec.key);
   }
 
   // ------------------------------------------------------------------ validation + save
@@ -202,6 +246,10 @@
         clearEdits(sid);
         state.views[sid] && (state.views[sid].draft = null);
         for (const k of Object.keys(total)) total[k] += (info.summary && info.summary[k]) || 0;
+        // record in change log
+        if (info.summary && (info.summary.added || info.summary.updated || info.summary.deleted)) {
+          state.changeLog.push({ at: Date.now(), sheetName: sheetName(sid), type: 'records', ...info.summary });
+        }
       }
       const parts = [];
       if (total.added) parts.push(`${total.added} added`); if (total.updated) parts.push(`${total.updated} updated`); if (total.deleted) parts.push(`${total.deleted} deleted`);
@@ -258,6 +306,10 @@
       if (summary.added) bits.push(`${summary.added} column${summary.added > 1 ? 's' : ''} added`);
       if (summary.removed) bits.push(`${summary.removed} removed`);
       if (summary.renamedHeaders) bits.push(`${summary.renamedHeaders} Excel header${summary.renamedHeaders > 1 ? 's' : ''} renamed`);
+      // record in change log
+      if (summary.added || summary.removed || summary.renamedHeaders) {
+        state.changeLog.push({ at: Date.now(), sheetName: sheetName(state.sheetId), type: 'fields', ...summary });
+      }
       toast('ok', 'Fields updated', (bits.join(', ') || 'Your field settings were saved') + '. The form, table, charts and download all use them now.');
       renderAll();
       return res;
@@ -300,19 +352,105 @@
     return name;
   }
 
+  // ------------------------------------------------------------------ download dialog helpers
+
+  function buildChangeLogUI() {
+    const log = state.changeLog;
+    if (!log.length) return null;
+
+    // Aggregate by sheet
+    const bySheet = {};
+    for (const entry of log) {
+      const k = entry.sheetName;
+      if (!bySheet[k]) bySheet[k] = { added: 0, updated: 0, deleted: 0, colAdded: 0, colRemoved: 0, colRenamed: 0 };
+      if (entry.type === 'records') {
+        bySheet[k].added   += entry.added   || 0;
+        bySheet[k].updated += entry.updated || 0;
+        bySheet[k].deleted += entry.deleted || 0;
+      } else {
+        bySheet[k].colAdded   += entry.added           || 0;
+        bySheet[k].colRemoved += entry.removed         || 0;
+        bySheet[k].colRenamed += entry.renamedHeaders  || 0;
+      }
+    }
+
+    const rows = Object.entries(bySheet).map(([name, s]) => {
+      const items = [];
+      if (s.added)      items.push(h('span.dl-tag.dl-tag-add',  {}, `+${s.added} added`));
+      if (s.updated)    items.push(h('span.dl-tag.dl-tag-upd',  {}, `${s.updated} edited`));
+      if (s.deleted)    items.push(h('span.dl-tag.dl-tag-del',  {}, `−${s.deleted} deleted`));
+      if (s.colAdded)   items.push(h('span.dl-tag.dl-tag-col',  {}, `+${s.colAdded} col`));
+      if (s.colRemoved) items.push(h('span.dl-tag.dl-tag-col',  {}, `−${s.colRemoved} col`));
+      if (s.colRenamed) items.push(h('span.dl-tag.dl-tag-col',  {}, `${s.colRenamed} renamed`));
+      return h('div.dl-sheet-row', {},
+        h('span.dl-sheet-name', {}, h('span', { html: icon('sheet') }), ' ' + name),
+        h('span.dl-tags', {}, ...items));
+    });
+
+    // totals
+    let totalRec = 0, totalFields = 0;
+    for (const s of Object.values(bySheet)) {
+      totalRec    += s.added + s.updated + s.deleted;
+      totalFields += s.colAdded + s.colRemoved + s.colRenamed;
+    }
+    const summary = [];
+    if (totalRec)    summary.push(`${totalRec} record change${totalRec === 1 ? '' : 's'}`);
+    if (totalFields) summary.push(`${totalFields} field change${totalFields === 1 ? '' : 's'}`);
+
+    return { el: h('div.dl-log', {}, ...rows), summary };
+  }
+
   async function downloadExcel() {
+    // --- Step 1: handle pending unsaved edits ---
     if (hasUnsaved()) {
       let skip = false;
-      const extra = h('button.btn.btn-sm.btn-ghost', { type: 'button', style: 'margin-top:12px', onclick: (e) => { skip = true; e.target.closest('.modal').querySelector('.modal-actions .btn:not(.btn-primary)').click(); } }, 'Download the last saved version instead');
-      const ok = await S.confirmDialog({ title: 'You have unsaved changes', confirmText: 'Save and download', cancelText: 'Cancel', body: 'The downloaded file only contains what has been saved. Save first so your latest edits are included.', extra });
+      const extra = h('button.btn.btn-sm.btn-ghost', { type: 'button', style: 'margin-top:12px',
+        onclick: (e) => { skip = true; e.target.closest('.modal').querySelector('.modal-actions .btn:not(.btn-primary)').click(); } },
+        'Download the last saved version instead');
+      const ok = await S.confirmDialog({ title: 'You have unsaved changes', confirmText: 'Save and download', cancelText: 'Cancel',
+        body: 'The downloaded file only contains what has been saved. Save first so your latest edits are included.', extra });
       if (ok) { if (!(await saveAll())) return; } else if (!skip) return;
     }
+
+    // --- Step 2: show change summary dialog ---
+    const noChanges = !state.wb.saves;
+    const logInfo = buildChangeLogUI();
+
+    if (noChanges || !logInfo) {
+      // No changes have been made since upload
+      const proceed = await S.confirmDialog({
+        title: 'No changes to include',
+        confirmText: 'Download original anyway',
+        cancelText: 'Cancel',
+        body: h('div', {},
+          h('div.dl-nochange', {},
+            h('div', { html: icon('check') }),
+            h('p', {}, 'You have not made any edits, added records, deleted rows or changed any field settings since this file was uploaded.')),
+          h('p.small.muted', { style: 'margin-top:10px' }, 'If you still want the file, you can download the original workbook unchanged.')),
+      });
+      if (!proceed) return;
+    } else {
+      // Show what changed before downloading
+      const savedTime = state.wb.savedAt ? new Date(state.wb.savedAt).toLocaleString() : null;
+      const proceed = await S.confirmDialog({
+        title: 'Ready to download',
+        confirmText: 'Download updated Excel',
+        cancelText: 'Cancel',
+        body: h('div', {},
+          h('p', {}, 'Your file includes ', h('b', {}, logInfo.summary.join(' and ')), ' since it was uploaded.'),
+          savedTime ? h('p.small.muted', {}, `Last saved: ${savedTime}`) : null,
+          logInfo.el),
+      });
+      if (!proceed) return;
+    }
+
+    // --- Step 3: trigger download ---
     const btn = $('#btn-download');
-    if (btn) { btn.disabled = true; btn.firstChild && (btn.lastChild.textContent = ' Preparing…'); }
+    if (btn) { btn.disabled = true; btn.lastChild && (btn.lastChild.textContent = ' Preparing…'); }
     try {
       const name = await downloadFile(`/api/workbooks/${state.id}/export.xlsx`);
       state.downloaded = true;
-      toast('ok', 'Download started', `${name} contains your latest saved changes.`);
+      toast('ok', 'Download started', `${name} is ready.`);
     } catch (e) { toast('err', 'Download failed', e.message + ' Your data is safe; please try again.'); }
     renderTopbar();
     if (state.tab === 'overview') renderView();
@@ -366,7 +504,7 @@
 
   // ------------------------------------------------------------------ ctx for views
   const ctx = {
-    sheet: cur, viewState: view, effective, get: getValue, setValue, addRecord, deleteRecord, restoreRecord, discardRecord, confirmDelete,
+    sheet: cur, viewState: view, effective, get: getValue, setValue, addRecord, deleteRecord, restoreRecord, discardRecord, confirmDelete, showEditPreview,
     errors: (key) => E(state.sheetId).errors[key] || {},
     openRecord: (key) => { view().selected = key; view().dismissed = false; setTab('form'); },
     save: () => saveAll(), revision: () => state.wb.revision, id: () => state.id, api, toast, upgradeNotice,

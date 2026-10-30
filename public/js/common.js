@@ -57,6 +57,13 @@
     return '<svg class="icon' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' + (P[name] || '') + '</svg>';
   }
 
+  /** Returns a live SVG DOM node — use when appending to a button/element directly (Firefox innerHTML parses SVG in HTML mode). */
+  function iconNode(name, cls) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = icon(name, cls);
+    return tmp.firstChild;
+  }
+
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const $ = (sel, root) => (root || document).querySelector(sel);
   const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
@@ -270,7 +277,7 @@
   }
 
   window.S2A = {
-    icon, esc, $, $$, h, api, ApiError, uploadFile, toast, confirmDialog, alertDialog, dialog,
+    icon, iconNode, esc, $, $$, h, api, ApiError, uploadFile, toast, confirmDialog, alertDialog, dialog,
     renderNav, renderFooter, chooseAndUpload, handleFile, startSample, wireGlobalActions,
     openWorkbook, rememberWorkbook, lastWorkbook, forgetWorkbook, friendlyUploadError, LOGO,
   };

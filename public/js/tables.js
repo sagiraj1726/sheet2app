@@ -1,7 +1,7 @@
-/* Data table view: search, column filters, sorting, pagination, row state highlighting. */
+/* Data table view: search, column filters, sorting, pagination, row state highlighting, column statistics. */
 (function () {
   'use strict';
-  const { h, $, icon } = window.S2A;
+  const { h, $, icon, iconNode } = window.S2A;
   const F = () => window.S2A.fields;
   const PAGE_SIZES = [10, 25, 50, 100];
   const lc = (v) => String(v).toLowerCase();
@@ -62,6 +62,125 @@
     return rows;
   }
 
+  // ---------------------------------------------------------------- column stats
+  function computeColStats(col, rows) {
+    const isNum = NUMTYPES.has(col.type);
+    const isDate = col.type === 'date';
+    const isBool = col.type === 'boolean';
+    const vals = rows.map((r) => r.v[col.id]);
+    const total = vals.length;
+    const blankCount = vals.filter((v) => F().isEmpty(v)).length;
+    const filled = vals.filter((v) => !F().isEmpty(v));
+    const filledCount = filled.length;
+
+    // frequency map for top values
+    const freq = new Map();
+    for (const v of filled) {
+      const key = F().display(col, v);
+      freq.set(key, (freq.get(key) || 0) + 1);
+    }
+    const sorted = [...freq.entries()].sort((a, b) => b[1] - a[1]);
+    const topValues = sorted.slice(0, 7);
+    const uniqueCount = freq.size;
+
+    let numStats = null;
+    if (isNum && filledCount > 0) {
+      const nums = filled.map((v) => Number(v)).filter(Number.isFinite);
+      if (nums.length > 0) {
+        const sum = nums.reduce((a, b) => a + b, 0);
+        const avg = sum / nums.length;
+        const sorted2 = [...nums].sort((a, b) => a - b);
+        const mid = Math.floor(sorted2.length / 2);
+        const median = sorted2.length % 2 === 0 ? (sorted2[mid - 1] + sorted2[mid]) / 2 : sorted2[mid];
+        numStats = { min: sorted2[0], max: sorted2[sorted2.length - 1], sum, avg, median, count: nums.length };
+      }
+    }
+
+    return { total, blankCount, filledCount, uniqueCount, topValues, numStats, isNum, isDate, isBool };
+  }
+
+  function fmtNum(n, col) {
+    if (!Number.isFinite(n)) return '—';
+    if (col.type === 'currency') return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(n);
+    if (col.type === 'integer') return Math.round(n).toLocaleString();
+    return n.toLocaleString(undefined, { maximumFractionDigits: 4 });
+  }
+
+  function showColStats(col, rows, anchor) {
+    // close existing panel
+    const existing = document.getElementById('cs-panel');
+    if (existing) { existing.remove(); if (existing.dataset.col === col.id) return; }
+
+    const stats = computeColStats(col, rows);
+    const pct = (n) => stats.total ? Math.round((n / stats.total) * 100) : 0;
+    const blankPct = pct(stats.blankCount);
+
+    function metric(val, lbl) {
+      return h('div.cs-metric', {}, h('div.cm-val', {}, val), h('div.cm-lbl', {}, lbl));
+    }
+
+    // overview section
+    const overviewItems = [
+      metric(stats.total.toLocaleString(), 'Total rows'),
+      metric(stats.filledCount.toLocaleString(), 'Filled'),
+      metric(stats.uniqueCount.toLocaleString(), 'Unique values'),
+      metric(stats.blankCount ? stats.blankCount.toLocaleString() : '0', 'Blank / empty'),
+    ];
+
+    const sections = [
+      h('div.cs-section', {},
+        h('h4', {}, 'Overview'),
+        h('div.cs-metrics', {}, ...overviewItems),
+        stats.blankCount > 0 ? h('div.cs-blank-bar', {},
+          h('div.cb-label', {}, h('span', {}, 'Completeness'), h('span', {}, `${100 - blankPct}% filled`)),
+          h('div.cb-track', {}, h('div.cb-fill', { style: `width:${blankPct}%` }))) : null)
+    ];
+
+    // numeric stats
+    if (stats.numStats) {
+      const ns = stats.numStats;
+      sections.push(h('div.cs-section', {},
+        h('h4', {}, 'Numeric summary'),
+        h('div.cs-metrics', {},
+          metric(fmtNum(ns.min, col), 'Minimum'),
+          metric(fmtNum(ns.max, col), 'Maximum'),
+          metric(fmtNum(ns.avg, col), 'Average'),
+          metric(fmtNum(ns.median, col), 'Median'),
+          metric(fmtNum(ns.sum, col), 'Sum'),
+          metric(ns.count.toLocaleString(), 'Numeric rows'))));
+    }
+
+    // top values section
+    if (stats.topValues.length > 0) {
+      const maxCnt = stats.topValues[0][1];
+      const tvItems = stats.topValues.map(([label, count]) =>
+        h('li', {},
+          h('span.tv-label', { title: label }, label),
+          h('div.cs-bar-wrap', {}, h('div.cs-bar-fill', { style: `width:${Math.round((count / maxCnt) * 100)}%` })),
+          h('span.tv-count', {}, count.toLocaleString())));
+      sections.push(h('div.cs-section', {},
+        h('h4', {}, stats.uniqueCount > 7 ? `Top 7 of ${stats.uniqueCount} values` : `All ${stats.uniqueCount} value${stats.uniqueCount !== 1 ? 's' : ''}`),
+        h('ul.cs-topval', {}, ...tvItems)));
+    }
+
+    const typeLabel = (F().TYPE_LABEL || {})[col.type] || col.type;
+    const panel = h('div.cs-panel', { id: 'cs-panel', 'data-col': col.id, role: 'complementary', 'aria-label': `Statistics for ${col.label}` },
+      h('div.cs-header', {},
+        h('h3', {}, col.label),
+        h('span.cs-type-badge', {}, typeLabel),
+        h('button', { type: 'button', 'aria-label': 'Close statistics panel', onclick: () => panel.remove() },
+          h('span', { html: icon('x') }))),
+      h('div.cs-body', {}, ...sections));
+
+    document.body.appendChild(panel);
+
+    // close on Escape
+    const onKey = (e) => { if (e.key === 'Escape') { panel.remove(); document.removeEventListener('keydown', onKey); } };
+    document.addEventListener('keydown', onKey);
+    panel.addEventListener('remove', () => document.removeEventListener('keydown', onKey));
+  }
+
+  // ---------------------------------------------------------------- main table view
   function dataView(ctx, root) {
     const sheet = ctx.sheet();
     const view = ctx.viewState();
@@ -136,11 +255,22 @@
       const head = h('tr', {},
         ...cols.map((c) => {
           const active = view.sortCol === c.id;
+          const panelOpen = document.getElementById('cs-panel')?.dataset.col === c.id;
+          // stat button — built imperatively so innerHTML (SVG) is set directly
+          const statsBtn = document.createElement('button');
+          statsBtn.type = 'button';
+          statsBtn.className = 'btn-stats' + (panelOpen ? ' active' : '');
+          statsBtn.title = `Column statistics: ${c.label}`;
+          statsBtn.setAttribute('aria-label', `Show statistics for ${c.label}`);
+          statsBtn.appendChild(iconNode('chart'));
+          statsBtn.addEventListener('click', (e) => { e.stopPropagation(); showColStats(c, ctx.effective(), statsBtn); paint(); });
           return h('th', { scope: 'col', 'aria-sort': active ? (view.sortDir === 'desc' ? 'descending' : 'ascending') : 'none' },
-            h('button', { type: 'button', title: 'Sort by ' + c.label, onclick: () => {
-              if (view.sortCol === c.id) { if (view.sortDir === 'asc') view.sortDir = 'desc'; else { view.sortCol = null; view.sortDir = 'asc'; } } else { view.sortCol = c.id; view.sortDir = 'asc'; }
-              paint();
-            } }, h('span', {}, c.label), h('span.th-type', {}, F().TYPE_LABEL[c.type]), h('span', { html: active ? icon(view.sortDir === 'desc' ? 'down' : 'up') : '', style: 'margin-left:auto;color:var(--brand)' })));
+            h('div.th-inner', {},
+              h('button', { type: 'button', title: 'Sort by ' + c.label, onclick: () => {
+                if (view.sortCol === c.id) { if (view.sortDir === 'asc') view.sortDir = 'desc'; else { view.sortCol = null; view.sortDir = 'asc'; } } else { view.sortCol = c.id; view.sortDir = 'asc'; }
+                paint();
+              } }, h('span', {}, c.label), h('span.th-type', {}, F().TYPE_LABEL[c.type]), h('span', { html: active ? icon(view.sortDir === 'desc' ? 'down' : 'up') : '', style: 'margin-left:auto;color:var(--brand)' })),
+              statsBtn));
         }),
         h('th.act', { scope: 'col' }, h('span.sr-only', {}, 'Actions')));
 
@@ -153,11 +283,26 @@
           tr.append(td);
         }
         const idx = all.indexOf(r) + 1;
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn btn-sm btn-icon';
+        editBtn.type = 'button';
+        editBtn.setAttribute('aria-label', 'Edit record ' + idx);
+        editBtn.title = r.state === 'edited' || r.state === 'new' ? 'View changes / Edit' : 'Edit';
+        editBtn.appendChild(iconNode('edit'));
+        editBtn.addEventListener('click', () => r.state === 'edited' ? ctx.showEditPreview(r) : ctx.openRecord(r.key));
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'btn btn-sm btn-icon btn-danger-outline';
+        delBtn.type = 'button';
+        delBtn.setAttribute('aria-label', 'Delete record ' + idx);
+        delBtn.title = 'Delete';
+        delBtn.appendChild(iconNode('trash'));
+        delBtn.addEventListener('click', async () => { if (await ctx.confirmDelete(r)) { ctx.deleteRecord(r.key); paint(); } });
+
         tr.append(h('td.act', {}, h('div', { style: 'display:flex;gap:4px' },
           r.state === 'deleted'
             ? h('button.btn.btn-sm', { type: 'button', onclick: () => { ctx.restoreRecord(r.key); paint(); } }, 'Restore')
-            : [h('button.btn.btn-sm.btn-icon', { type: 'button', 'aria-label': 'Edit record ' + idx, title: 'Edit', onclick: () => ctx.openRecord(r.key) }, h('span', { html: icon('edit') })),
-               h('button.btn.btn-sm.btn-icon.btn-danger-outline', { type: 'button', 'aria-label': 'Delete record ' + idx, title: 'Delete', onclick: async () => { if (await ctx.confirmDelete(r)) { ctx.deleteRecord(r.key); paint(); } } }, h('span', { html: icon('trash') }))])));
+            : [editBtn, delBtn])));
         tr.addEventListener('dblclick', () => { if (r.state !== 'deleted') ctx.openRecord(r.key); });
         return tr;
       });
